@@ -40,7 +40,7 @@ export const ITEM_TABLE: El = {
         children: [leaf('name')] },
       leaf('versionCreated'),
       leaf('embargo'),
-      { name: 'link', get: (m) => m.canonical ? { rel: 'canonical', href: m.canonical } : undefined,
+      { name: 'link', get: (m) => m.canonical ? { rel: 'irel:canonical', href: m.canonical } : undefined,
         attrs: (l) => ({ rel: l.rel, href: l.href }) },
     ]},
     { name: 'contentMeta', get: (i) => i.contentMeta, children: [

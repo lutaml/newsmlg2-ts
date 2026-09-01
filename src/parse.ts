@@ -33,7 +33,7 @@ const mapNewsItem = (ni: any, xml: string): NewsItemModel => {
       version: ni['@_version'] !== undefined ? Number(ni['@_version']) : undefined,
       pubStatus: ni['@_pubstatus'],
       itemClass: meta.itemClass?.['@_qcode'],
-      canonical: meta.link?.['@_rel'] === 'canonical' ? meta.link?.['@_href'] : undefined,
+      canonical: meta.link?.['@_rel'] === 'irel:canonical' ? meta.link?.['@_href'] : undefined,
       provider: meta.provider
         ? { qcode: meta.provider['@_qcode'], name: text(meta.provider.name) }
         : undefined,
