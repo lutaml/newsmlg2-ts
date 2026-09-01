@@ -38,6 +38,8 @@ export const ITEM_TABLE: El = {
       { name: 'itemClass', get: (m) => m.itemClass, attrs: (v) => ({ qcode: v }) },
       { name: 'provider', get: (m) => m.provider, attrs: (p) => ({ qcode: p?.qcode }),
         children: [leaf('name')] },
+      { name: 'link', get: (m) => m.canonical ? { rel: 'canonical', href: m.canonical } : undefined,
+        attrs: (l) => ({ rel: l.rel, href: l.href }) },
       leaf('versionCreated'),
       leaf('embargo'),
     ]},

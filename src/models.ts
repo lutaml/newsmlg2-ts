@@ -12,6 +12,7 @@ export interface ItemMeta {
   version?: number
   pubStatus?: string
   itemClass?: string            // qcode, e.g. ninat:text
+  canonical?: string            // itemMeta/link[@rel="canonical"] href
   provider?: { qcode?: string; name?: string }
   versionCreated?: string
   embargo?: string
