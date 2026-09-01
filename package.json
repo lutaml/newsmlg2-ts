@@ -1,0 +1,25 @@
+{
+  "name": "newsmlg2-ts",
+  "version": "0.1.0",
+  "description": "NewsML-G2 (IPTC 2.35) codec subset for TypeScript: parse and build NewsMessage/NewsItem with inline XHTML content and remoteContent renditions.",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": { ".": { "import": "./dist/index.js", "types": "./dist/index.d.ts" } },
+  "files": ["dist", "src/catalogs"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "prepublishOnly": "npm run build"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0",
+    "fast-xml-parser": "^4.5.0"
+  },
+  "dependencies": {
+    "fast-xml-parser": "^4.5.0"
+  },
+  "license": "BSD-2-Clause",
+  "repository": { "type": "git", "url": "https://github.com/lutaml/newsmlg2-ts" }
+}
