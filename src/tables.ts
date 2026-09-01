@@ -10,6 +10,11 @@ export interface El {
   text?: (v: any) => string | undefined
   attrs?: (v: any) => Attr
   children?: El[]
+  /** arrays: 'self' repeats this element per item (default);
+   * 'children' renders this element once, repeating its single child. */
+  repeat?: 'self' | 'children'
+  /** emit text content unescaped (element content, e.g. inlineXML XHTML) */
+  raw?: boolean
 }
 
 const leaf = (name: string): El => ({
@@ -48,7 +53,8 @@ export const ITEM_TABLE: El = {
         children: [leaf('name')] },
     ]},
     { name: 'contentSet', get: (i) => i.contentMeta, children: [
-      { name: 'inlineXML', get: (c) => c.bodyXhtml, text: (v) => String(v) },
+      { name: 'inlineXML', get: (c) => c.bodyXhtml, raw: true,
+        text: (v) => `<html xmlns="http://www.w3.org/1999/xhtml">${String(v)}</html>` },
       { name: 'remoteContent', get: (c) => c.renditions ?? [],
         attrs: (r) => ({ href: r?.href, mimetype: r?.mimetype, rendition: r?.rendition }) },
     ]},
@@ -60,6 +66,6 @@ export const MESSAGE_TABLE: El = {
   get: (m) => m,
   children: [
     { name: 'header', get: (m) => m.header, children: [leaf('sent'), leaf('sender')] },
-    { name: 'itemSet', get: (m) => m.items, children: [ITEM_TABLE] },
+    { name: 'itemSet', get: (m) => m.items, repeat: 'children', children: [ITEM_TABLE] },
   ],
 }

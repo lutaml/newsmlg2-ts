@@ -18,7 +18,13 @@ const render = (el: El, obj: unknown, depth: number, root: boolean): string => {
   const value = el.get ? el.get(obj) : obj
   if (value === undefined || value === null || value === '') return ''
   if (Array.isArray(value)) {
-    return value.map((v) => render({ ...el, get: undefined }, v, depth, false).trimStart()).join('')
+    if (el.repeat === 'children') {
+      const child = el.children![0]
+      const inner = value.map((v) => render(child, v, depth + 1, false)).filter(Boolean).join('')
+      if (inner === '') return ''
+      return `\n${'  '.repeat(depth)}<${el.name}>${inner}\n${'  '.repeat(depth)}</${el.name}>`
+    }
+    return value.map((v) => render({ ...el, get: undefined }, v, depth, false)).join('')
   }
   const attrs = el.attrs ? renderAttrs(el.attrs(value)) : ''
   const ns = root ? ` xmlns="${NAR}"` : ''
@@ -34,7 +40,8 @@ const render = (el: El, obj: unknown, depth: number, root: boolean): string => {
   }
   const text = el.text ? el.text(value) : undefined
   if (text !== undefined && text !== '') {
-    return `\n${pad}<${el.name}${ns}${attrs}>${esc(text)}</${el.name}>`
+    const content = el.raw ? text : esc(text)
+    return `\n${pad}<${el.name}${ns}${attrs}>${content}</${el.name}>`
   }
   if (attrs === '') return '' // optional leaf, nothing to say
   return `\n${pad}<${el.name}${ns}${attrs}/>`
