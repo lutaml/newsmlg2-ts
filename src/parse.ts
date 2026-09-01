@@ -48,15 +48,18 @@ const mapNewsItem = (ni: any): NewsItemModel => {
           located: text(one(cm.located)?.name) ?? text(cm.located),
           contentCreated: text(cm.contentCreated),
           subjects: arr(cm.subject).map((s: any) => ({ qcode: s['@_qcode'], name: text(s.name) })),
-          bodyXhtml: contentSet?.inlineXML
-            ? typeof contentSet.inlineXML === 'string'
-              ? contentSet.inlineXML
-              : (contentSet.inlineXML?.['#text'] ?? undefined)
-            : undefined,
+          bodyXhtml: extractInlineXml(xml),
           renditions,
         }
       : undefined,
   }
+}
+
+// Inline XHTML is element content; extract it from the raw XML verbatim
+// so markup passes through untouched.
+const extractInlineXml = (xml: string): string | undefined => {
+  const m = xml.match(/<inlineXML[^>]*>([\s\S]*?)<\/inlineXML>/)
+  return m ? m[1].trim() : undefined
 }
 
 export const parseNewsItem = (xml: string): NewsItemModel => {
