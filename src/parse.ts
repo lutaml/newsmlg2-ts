@@ -17,7 +17,7 @@ const arr = <T>(v: T | T[] | undefined): T[] =>
 const text = (v: unknown): string | undefined =>
   typeof v === 'string' ? v : (v as any)?.['#text'] !== undefined ? String((v as any)['#text']) : undefined
 
-const mapNewsItem = (ni: any): NewsItemModel => {
+const mapNewsItem = (ni: any, xml: string): NewsItemModel => {
   const meta = ni.itemMeta ?? {}
   const cm = ni.contentMeta
   const contentSet = ni.contentSet
@@ -66,7 +66,7 @@ export const parseNewsItem = (xml: string): NewsItemModel => {
   const doc = parser.parse(xml)
   const ni = one(doc['newsItem']) ?? one((doc['newsMessage'] as any)?.itemSet?.newsItem)
   if (!ni) throw new Error('no newsItem element')
-  return mapNewsItem(ni)
+  return mapNewsItem(ni, xml)
 }
 
 export const parseNewsMessage = (xml: string): NewsMessageModel => {
@@ -75,6 +75,6 @@ export const parseNewsMessage = (xml: string): NewsMessageModel => {
   if (!msg) throw new Error('no newsMessage element')
   return {
     header: { sent: text(msg.header?.sent), sender: text(msg.header?.sender) },
-    items: arr(msg.itemSet?.newsItem).map(mapNewsItem),
+    items: arr(msg.itemSet?.newsItem).map((ni: any) => mapNewsItem(ni, xml)),
   }
 }
