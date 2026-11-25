@@ -1,5 +1,27 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- Publisher identity is configuration (closes #3): `Spoke` gains
+  `guidPrefix` (GUID URN namespace, trailing colon included — permanent
+  identifier; default `urn:ribose:news:`), `sender` (index NewsMessage
+  sender; default falls back to `name`), and `postsPath` (canonical link
+  path prefix; default `blog`). The validator parses the configured
+  namespace (`validateOutput(dir, { guidPrefix })`) and flags GUIDs under
+  a foreign scheme.
+- Front-matter description and categories (closes #4): `description`
+  (or `excerpt`) → `contentMeta/description`; `categories` (or
+  `subjects`) → `contentMeta/subjects` as plain names. Emitted on both
+  the index and full items.
+
+### Changed
+
+- Index NewsMessage `sender` now derives from the spoke (`sender` or
+  `name`) instead of the literal `Ribose` — a one-line diff in existing
+  emitted indexes.
+
 ## [0.1.1] - 2026-11-25
 
 ### Added

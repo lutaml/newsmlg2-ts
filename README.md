@@ -74,9 +74,21 @@ validateOutput('dist/news-data') // [] = tree is sound
 Or the CLI in a build: `newsmlg2 emit --config spoke.yaml`, then
 `newsmlg2 validate --dir dist/news-data`. Posts are dated markdown
 (`YYYY-MM-DD-slug.md`, filename date is authoritative); frontmatter keys:
-`title`, `author`, `draft`, `withdrawn`, `version`. Output is deterministic —
+`title`, `author`, `description` (or `excerpt`), `categories` (or
+`subjects`), `draft`, `withdrawn`, `version`. Output is deterministic —
 the index `sent` timestamp derives from the newest item, never the clock —
 so emit-twice-compare is a valid CI gate.
+
+Publisher identity lives in the spoke config (defaults shown):
+
+```yaml
+id: pubid                      # stable; part of every GUID
+name: PubID                    # provider, byline, sender fallback
+base: https://www.pubid.com
+guidPrefix: urn:ribose:news:   # GUID namespace — permanent, choose once
+postsPath: blog                # canonical links: <base>/<postsPath>/<date>-<slug>
+sender: PubID                  # index NewsMessage sender (default: name)
+```
 
 ## Design
 

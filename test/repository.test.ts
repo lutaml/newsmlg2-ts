@@ -114,3 +114,92 @@ describe('repository emission', () => {
     }
   })
 })
+
+describe('publisher identity is configuration', () => {
+  it('custom guid namespace, sender, and posts path', () => {
+    const dir = temp()
+    try {
+      emitNewsml({
+        spoke: { id: 'acme', name: 'Acme', base: 'https://acme.example', sender: 'Acme Newsdesk', guidPrefix: 'urn:acme:wire:', postsPath: 'press' },
+        posts: POSTS,
+        outDir: dir,
+      })
+      const index = readFileSync(join(dir, 'newsml.xml'), 'utf8')
+      expect(index).toMatch(/<sender>Acme Newsdesk<\/sender>/)
+      expect(index).toMatch(/urn:acme:wire:2026-10-01:acme:hello-world/)
+      expect(index).not.toMatch(/urn:ribose:news:/)
+      const art = readFileSync(join(dir, 'articles', '2026-10-01-hello-world', 'newsml.xml'), 'utf8')
+      expect(art).toMatch(/<link rel="irel:canonical" href="https:\/\/acme\.example\/press\/2026-10-01-hello-world"\/>/)
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
+  it('sender falls back to the spoke name; canonical defaults to /blog/', () => {
+    const dir = temp()
+    try {
+      emit(dir)
+      const index = readFileSync(join(dir, 'newsml.xml'), 'utf8')
+      expect(index).toMatch(/<sender>Test<\/sender>/)
+      expect(index).toMatch(/canonical="https:\/\/test\.example\/blog\/2026-10-01-hello-world"|href="https:\/\/test\.example\/blog\/2026-10-01-hello-world"/)
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
+  it('validates with the configured guid namespace and flags a foreign one', () => {
+    const dir = temp()
+    try {
+      emitNewsml({
+        spoke: { id: 'acme', name: 'Acme', base: 'https://acme.example', guidPrefix: 'urn:acme:wire:' },
+        posts: POSTS,
+        outDir: dir,
+      })
+      expect(validateOutput(dir, { guidPrefix: 'urn:acme:wire:' })).toEqual([])
+      const foreign = validateOutput(dir) // default ribose prefix does not match
+      expect(foreign.length).toBeGreaterThan(0)
+      expect(foreign[0]).toMatch(/not under "urn:ribose:news:"/)
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+})
+
+describe('front-matter description and categories', () => {
+  it('maps description and categories into index and full items', () => {
+    const dir = temp()
+    try {
+      emit(dir, [
+        {
+          date: '2026-10-01', slug: 'rich', title: 'Rich', body: 'text',
+          description: 'An excerpt',
+          subjects: [{ name: 'Releases' }, { name: 'Benchmarks' }],
+        },
+      ])
+      const index = readFileSync(join(dir, 'newsml.xml'), 'utf8')
+      expect(index).toMatch(/<description>An excerpt<\/description>/)
+      expect(index).toMatch(/<subject>\s*<name>Releases<\/name>\s*<\/subject>/)
+      const full = readFileSync(join(dir, 'articles', '2026-10-01-rich', 'newsml.xml'), 'utf8')
+      expect(full).toMatch(/<description>An excerpt<\/description>/)
+      expect(full).toMatch(/<subject>\s*<name>Benchmarks<\/name>\s*<\/subject>/)
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
+  it('discovers description (excerpt fallback) and categories from front matter', () => {
+    const dir = temp()
+    try {
+      mkdirSync(dir, { recursive: true })
+      writeFileSync(join(dir, '2026-06-01-a.md'), '---\ntitle: A\ndescription: Desc\nexcluded: x\n---\nbody\n')
+      writeFileSync(join(dir, '2026-06-02-b.md'), "---\ntitle: B\nexcerpt: 'Shorty'\ncategories: ['One', 'Two']\n---\nbody\n")
+      const posts = loadMarkdownPosts({ contentDir: dir })
+      expect(posts[0].description).toBe('Shorty')
+      expect(posts[0].subjects).toEqual([{ name: 'One' }, { name: 'Two' }])
+      expect(posts[1].description).toBe('Desc')
+      expect(posts[1].subjects).toBeUndefined()
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+})
