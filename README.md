@@ -26,6 +26,27 @@ toXml() // canonical pretty XML, byte-shape identical to the Ruby gem
 const msg = parseNewsMessage(xml) // { header: {sent, sender}, items: [...] }
 ```
 
+## Edit
+
+Models are plain mutable objects — parse, mutate, rebuild:
+
+```ts
+import { editNewsItem, editNewsMessage, withdrawNewsItem } from 'newsmlg2-ts'
+
+// from XML or from a model; mutation is in place, result re-serializes
+const { model, toXml } = editNewsItem(xml, (item) => {
+  item.contentMeta.headline = 'Corrected headline'
+})
+
+// withdrawal = pubStatus="withdrawn" on a NEW version (version + 1):
+// a withdrawal is a new version of the item, never a silent edit
+const withdrawn = withdrawNewsItem(xml)
+```
+
+`build → parse → build` is byte-identical. `contentMeta.bodyXhtml` is the
+**unwrapped** XHTML: `build` adds the `<html xmlns="…">` envelope,
+`parse` removes it — an edited item re-serializes identically.
+
 ## Design
 
 - **Declarative tables** (`src/tables.ts`) drive a single generic serializer
