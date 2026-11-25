@@ -26,6 +26,58 @@ toXml() // canonical pretty XML, byte-shape identical to the Ruby gem
 const msg = parseNewsMessage(xml) // { header: {sent, sender}, items: [...] }
 ```
 
+## Edit
+
+Models are plain mutable objects — parse, mutate, rebuild:
+
+```ts
+import { editNewsItem, editNewsMessage, withdrawNewsItem } from 'newsmlg2-ts'
+
+// from XML or from a model; mutation is in place, result re-serializes
+const { model, toXml } = editNewsItem(xml, (item) => {
+  item.contentMeta.headline = 'Corrected headline'
+})
+
+// withdrawal = pubStatus="withdrawn" on a NEW version (version + 1):
+// a withdrawal is a new version of the item, never a silent edit
+const withdrawn = withdrawNewsItem(xml)
+```
+
+`build → parse → build` is byte-identical. `contentMeta.bodyXhtml` is the
+**unwrapped** XHTML: `build` adds the `<html xmlns="…">` envelope,
+`parse` removes it — an edited item re-serializes identically.
+
+## Repository toolkit
+
+Beyond document parsing, the package reads and writes a **news repository**:
+a static tree of NewsML-G2 files on disk.
+
+```
+<outDir>/newsml.xml                          index NewsMessage (metadata only)
+<outDir>/articles/<YYYY-MM-DD>-<slug>/
+  newsml.xml                                 full NewsItem (inline XHTML + renditions)
+  body.md                                    source rendition
+```
+
+```ts
+import { emitNewsml, loadMarkdownPosts, validateOutput } from 'newsmlg2-ts'
+
+emitNewsml({
+  spoke: { id: 'pubid', name: 'PubID', base: 'https://www.pubid.com' },
+  posts: loadMarkdownPosts({ contentDir: 'src/content/blog' }),
+  outDir: 'dist/news-data',
+  renderBody: (md) => marked.parse(md, { async: false }),
+})
+validateOutput('dist/news-data') // [] = tree is sound
+```
+
+Or the CLI in a build: `newsmlg2 emit --config spoke.yaml`, then
+`newsmlg2 validate --dir dist/news-data`. Posts are dated markdown
+(`YYYY-MM-DD-slug.md`, filename date is authoritative); frontmatter keys:
+`title`, `author`, `draft`, `withdrawn`, `version`. Output is deterministic —
+the index `sent` timestamp derives from the newest item, never the clock —
+so emit-twice-compare is a valid CI gate.
+
 ## Design
 
 - **Declarative tables** (`src/tables.ts`) drive a single generic serializer
