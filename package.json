@@ -1,10 +1,13 @@
 {
   "name": "newsmlg2-ts",
   "version": "0.1.0",
-  "description": "NewsML-G2 (IPTC 2.35) codec subset for TypeScript: parse and build NewsMessage/NewsItem with inline XHTML content and remoteContent renditions.",
+  "description": "NewsML-G2 (IPTC 2.35) for TypeScript: document codec (parse/build/edit NewsMessage/NewsItem, inline XHTML, renditions) and the Ribose news repository toolkit (emit, validate, discovery; the `newsmlg2` CLI).",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "bin": {
+    "newsmlg2": "./bin/newsmlg2.mjs"
+  },
   "exports": {
     ".": {
       "import": "./dist/index.js",
@@ -12,6 +15,7 @@
     }
   },
   "files": [
+    "bin",
     "dist",
     "src/catalogs"
   ],
@@ -24,10 +28,14 @@
   "devDependencies": {
     "typescript": "^5.6.0",
     "vitest": "^2.1.0",
-    "fast-xml-parser": "^4.5.0"
+    "fast-xml-parser": "^4.5.0",
+    "@types/node": "^22.0.0"
   },
   "dependencies": {
-    "fast-xml-parser": "^4.5.0"
+    "fast-xml-parser": "^4.5.0",
+    "gray-matter": "^4.0.3",
+    "marked": "^18.0.11",
+    "yaml": "^2.8.0"
   },
   "license": "BSD-2-Clause",
   "repository": {

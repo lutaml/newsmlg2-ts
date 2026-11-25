@@ -47,6 +47,37 @@ const withdrawn = withdrawNewsItem(xml)
 **unwrapped** XHTML: `build` adds the `<html xmlns="…">` envelope,
 `parse` removes it — an edited item re-serializes identically.
 
+## Repository toolkit
+
+Beyond document parsing, the package reads and writes a **news repository**:
+a static tree of NewsML-G2 files on disk.
+
+```
+<outDir>/newsml.xml                          index NewsMessage (metadata only)
+<outDir>/articles/<YYYY-MM-DD>-<slug>/
+  newsml.xml                                 full NewsItem (inline XHTML + renditions)
+  body.md                                    source rendition
+```
+
+```ts
+import { emitNewsml, loadMarkdownPosts, validateOutput } from 'newsmlg2-ts'
+
+emitNewsml({
+  spoke: { id: 'pubid', name: 'PubID', base: 'https://www.pubid.com' },
+  posts: loadMarkdownPosts({ contentDir: 'src/content/blog' }),
+  outDir: 'dist/news-data',
+  renderBody: (md) => marked.parse(md, { async: false }),
+})
+validateOutput('dist/news-data') // [] = tree is sound
+```
+
+Or the CLI in a build: `newsmlg2 emit --config spoke.yaml`, then
+`newsmlg2 validate --dir dist/news-data`. Posts are dated markdown
+(`YYYY-MM-DD-slug.md`, filename date is authoritative); frontmatter keys:
+`title`, `author`, `draft`, `withdrawn`, `version`. Output is deterministic —
+the index `sent` timestamp derives from the newest item, never the clock —
+so emit-twice-compare is a valid CI gate.
+
 ## Design
 
 - **Declarative tables** (`src/tables.ts`) drive a single generic serializer
