@@ -57,10 +57,12 @@ const mapNewsItem = (ni: any, xml: string): NewsItemModel => {
 }
 
 // Inline XHTML is element content; extract it from the raw XML verbatim
-// so markup passes through untouched.
+// so markup passes through untouched, minus the <html> envelope the
+// serializer adds — parse(model).roundTrip must equal build(model).
 const extractInlineXml = (xml: string): string | undefined => {
   const m = xml.match(/<inlineXML[^>]*>([\s\S]*?)<\/inlineXML>/)
-  return m ? m[1].trim() : undefined
+  if (!m) return undefined
+  return m[1].trim().replace(/^<html[^>]*>/, '').replace(/<\/html>\s*$/, '').trim()
 }
 
 export const parseNewsItem = (xml: string): NewsItemModel => {
