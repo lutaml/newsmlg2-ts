@@ -1,6 +1,6 @@
 {
   "name": "newsmlg2-ts",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "NewsML-G2 (IPTC 2.35) for TypeScript: document codec (parse/build/edit NewsMessage/NewsItem, inline XHTML, renditions) and the Ribose news repository toolkit (emit, validate, discovery; the `newsmlg2` CLI).",
   "type": "module",
   "main": "dist/index.js",
