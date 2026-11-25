@@ -3,6 +3,11 @@
 // Determinism: the index `sent` timestamp derives from the newest item's
 // date, never the wall clock — two runs over identical input MUST be
 // byte-identical.
+//
+// Publisher identity lives on `Spoke` (provider, sender, GUID namespace,
+// canonical path). The Ribose network values are defaults, not hardcode:
+// `guidPrefix: 'urn:ribose:news:'`, `postsPath: 'blog'`, sender falls back
+// to the spoke name.
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { buildNewsItem, buildNewsMessage, withdrawNewsItem } from '../build.js'
@@ -23,6 +28,15 @@ const versionStamp = (p: Post): string => `${p.date}T00:00:00+00:00`
 const sentFrom = (posts: Post[]): string =>
   `${posts.map((p) => p.date).sort().at(-1) ?? '1970-01-01'}T00:00:00+00:00`
 
+const guidOf = (spoke: Spoke, p: Post): string =>
+  `${spoke.guidPrefix ?? 'urn:ribose:news:'}${p.date}:${spoke.id}:${p.slug}`
+
+const canonicalOf = (spoke: Spoke, p: Post): string => {
+  const prefix = spoke.postsPath ?? 'blog'
+  const segments = [spoke.base.replace(/\/$/, ''), prefix, `${p.date}-${p.slug}`].filter(Boolean)
+  return segments.join('/')
+}
+
 const toModel = (
   spoke: Spoke,
   renderBody: EmitOptions['renderBody'],
@@ -30,11 +44,11 @@ const toModel = (
   full: boolean,
 ): NewsItemModel => ({
   itemMeta: {
-    guid: `urn:ribose:news:${p.date}:${spoke.id}:${p.slug}`,
+    guid: guidOf(spoke, p),
     lang: 'en',
     version: p.version ?? 1,
     itemClass: 'ninat:text',
-    canonical: `${spoke.base}/blog/${p.date}-${p.slug}`,
+    canonical: canonicalOf(spoke, p),
     provider: { qcode: `nprov:${spoke.id}`, name: spoke.name },
     versionCreated: versionStamp(p),
   },
@@ -42,6 +56,8 @@ const toModel = (
     headline: p.title,
     by: p.author ?? `${spoke.name} Team`,
     contentCreated: versionStamp(p),
+    ...(p.description ? { description: p.description } : {}),
+    ...(p.subjects?.length ? { subjects: p.subjects } : {}),
     ...(full
       ? {
           bodyXhtml: renderBody ? renderBody(p.body) : p.body,
@@ -69,7 +85,7 @@ export const emitNewsml = ({ spoke, posts, outDir, renderBody }: EmitOptions): n
   writeFileSync(
     join(outDir, 'newsml.xml'),
     buildNewsMessage({
-      header: { sent: sentFrom(posts), sender: 'Ribose' },
+      header: { sent: sentFrom(posts), sender: spoke.sender ?? spoke.name },
       items: posts.map((p) => finalize(toModel(spoke, renderBody, p, false), p)),
     }).toXml(),
   )

@@ -1,11 +1,19 @@
 // Repository validation: structural + rendition-integrity gate over an
 // emitted tree. Byte stability is enforced separately by emitting twice
-// and comparing.
+// and comparing. GUIDs are parsed with the spoke's configured namespace
+// (the same `guidPrefix` the emitter used), defaulting to the Ribose
+// network scheme.
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { parseNewsItem, parseNewsMessage } from '../parse.js'
 
-export const validateOutput = (outDir: string): string[] => {
+export interface ValidateOptions {
+  /** GUID namespace including the trailing colon; must match the emitter's. */
+  guidPrefix?: string
+}
+
+export const validateOutput = (outDir: string, opts: ValidateOptions = {}): string[] => {
+  const guidPrefix = opts.guidPrefix ?? 'urn:ribose:news:'
   let index
   try {
     index = parseNewsMessage(readFileSync(join(outDir, 'newsml.xml'), 'utf8'))
@@ -15,7 +23,11 @@ export const validateOutput = (outDir: string): string[] => {
   const errors: string[] = []
   for (const item of index.items) {
     const guid = item.itemMeta?.guid ?? ''
-    const [date, , slug] = guid.replace(/^urn:ribose:news:/, '').split(':')
+    if (!guid.startsWith(guidPrefix)) {
+      errors.push(`guid not under ${JSON.stringify(guidPrefix)}: ${guid}`)
+      continue
+    }
+    const [date, , slug] = guid.slice(guidPrefix.length).split(':')
     if (!date || !slug) {
       errors.push(`unparseable guid: ${guid}`)
       continue
