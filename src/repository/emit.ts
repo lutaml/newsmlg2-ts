@@ -19,8 +19,9 @@ export interface EmitOptions {
   /** newest first, drafts excluded */
   posts: Post[]
   outDir: string
-  /** markdown → XHTML for the inline body */
-  renderBody?: (md: string) => string
+  /** body → XHTML for the inline body; the post is passed so the caller
+   * can render per format (md via marked, adoc via asciidoctor) */
+  renderBody?: (body: string, post: Post) => string
 }
 
 const versionStamp = (p: Post): string => `${p.date}T00:00:00+00:00`
@@ -60,7 +61,7 @@ const toModel = (
     ...(p.subjects?.length ? { subjects: p.subjects } : {}),
     ...(full
       ? {
-          bodyXhtml: renderBody ? renderBody(p.body) : p.body,
+          bodyXhtml: renderBody ? renderBody(p.body, p) : p.body,
           renditions: [{ href: 'body.md', rendition: 'rnd:main' }],
         }
       : {}),
