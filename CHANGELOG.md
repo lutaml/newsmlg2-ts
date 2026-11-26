@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.1.2] - 2026-11-26
 
 ### Added
 
@@ -15,6 +15,12 @@
   (or `excerpt`) → `contentMeta/description`; `categories` (or
   `subjects`) → `contentMeta/subjects` as plain names. Emitted on both
   the index and full items.
+
+### Fixed
+
+- `bin/newsmlg2.mjs` is committed with the executable bit — git-dependency
+  installs keep the committed mode, and the CLI failed with
+  `Permission denied` when pinned from a tag.
 
 ### Changed
 
