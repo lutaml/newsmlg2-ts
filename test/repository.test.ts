@@ -203,3 +203,66 @@ describe('front-matter description and categories', () => {
     }
   })
 })
+
+describe('asciidoc discovery (hub corpus shape)', () => {
+  it('discovers .adoc posts: frontmatter, doctitle fallback, author object, lang, format', () => {
+    const dir = temp()
+    try {
+      mkdirSync(dir, { recursive: true })
+      writeFileSync(
+        join(dir, '2012-05-28-private-beta.adoc'),
+        '---\nlayout: post\ntitle: "Ribose is now in private Beta"\nlang: en\nauthor:\n  name: Ronald Tse\n  email: tse@ribose.com\ncategories: ribose\n---\n= Ribose is now in private Beta\n\nBody text.\n',
+      )
+      writeFileSync(
+        join(dir, '2012-05-28-zh.adoc'),
+        '---\ntitle: "擎威 Beta"\nlang: zh-hant\n---\n= 擎威 Beta\n\n正文。\n',
+      )
+      const posts = loadMarkdownPosts({ contentDir: dir })
+      expect(posts.length).toBe(2)
+      expect(posts[0].format).toBe('adoc')
+      expect(posts[0].title).toBe('Ribose is now in private Beta')
+      expect(posts[0].author).toBe('Ronald Tse')
+      expect(posts[0].lang).toBe('en')
+      expect(posts[1].lang).toBe('zh-hant')
+      expect(posts[1].title).toBe('擎威 Beta')
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
+  it('renderBody receives the post, so adoc and md render differently', () => {
+    const dir = temp()
+    try {
+      const rendered: string[] = []
+      emitNewsml({
+        spoke: SPEAK,
+        posts: [
+          { date: '2026-11-01', slug: 'md-post', title: 'MD', body: 'md body', format: 'md' },
+          { date: '2026-11-02', slug: 'adoc-post', title: 'ADOC', body: 'adoc body', format: 'adoc' },
+        ],
+        outDir: dir,
+        renderBody: (body, post) => {
+          rendered.push(post.format)
+          return `<p>${post.format}:${body}</p>`
+        },
+      })
+      expect(rendered).toEqual(['md', 'adoc'])
+      const full = readFileSync(join(dir, 'articles', '2026-11-02-adoc-post', 'newsml.xml'), 'utf8')
+      expect(full).toMatch(/adoc:adoc body/)
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
+  it('langFallback applies when frontmatter has no lang', () => {
+    const dir = temp()
+    try {
+      mkdirSync(dir, { recursive: true })
+      writeFileSync(join(dir, '2026-06-01-x.md'), '---\ntitle: X\n---\nbody\n')
+      const posts = loadMarkdownPosts({ contentDir: dir, langFallback: 'en' })
+      expect(posts[0].lang).toBe('en')
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+})
