@@ -1,6 +1,20 @@
 # Changelog
 
+## [0.2.0] - 2026-11-26
+
+### Added
+
+- **AsciiDoc post discovery**: `loadMarkdownPosts` accepts dated `.adoc`
+  files beside markdown — hub-corpus shape (YAML frontmatter, doctitle
+  fallback, author objects, frontmatter `lang`, `langFallback`).
+  `Post.format` ('md' | 'adoc') and `renderBody(body, post)` make body
+  rendering format-aware; spokes can emit from AsciiDoc corpora without
+  conversion.
+- Story grouping and publisher identity configuration (see 0.1.2 notes;
+  released forward with this tag).
+
 ## [0.1.2] - 2026-11-26
+
 
 ### Added
 
