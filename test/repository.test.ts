@@ -113,6 +113,30 @@ describe('repository emission', () => {
       rmSync(dir, { recursive: true, force: true })
     }
   })
+  it('maps authors-array frontmatter (strings or {name} objects) to a joined byline; author wins', () => {
+    const dir = temp()
+    try {
+      mkdirSync(dir, { recursive: true })
+      writeFileSync(
+        join(dir, '2026-07-05-strings.md'),
+        '---\ntitle: S\nauthors:\n  - Ronald Tse\n  - Hassan Akbar\n---\nbody\n',
+      )
+      writeFileSync(
+        join(dir, '2026-07-06-objects.md'),
+        '---\ntitle: O\nauthors:\n  - name: Ronald Tse\n  - name: Alexey Morozov\n---\nbody\n',
+      )
+      writeFileSync(
+        join(dir, '2026-07-07-both.md'),
+        '---\ntitle: B\nauthor: Solo Author\nauthors:\n  - Ronald Tse\n---\nbody\n',
+      )
+      const posts = loadMarkdownPosts({ contentDir: dir })
+      expect(posts[2].author).toBe('Ronald Tse, Hassan Akbar')
+      expect(posts[1].author).toBe('Ronald Tse, Alexey Morozov')
+      expect(posts[0].author).toBe('Solo Author')
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
 })
 
 describe('publisher identity is configuration', () => {

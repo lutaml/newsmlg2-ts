@@ -77,6 +77,14 @@ const asAuthor = (v: unknown): string | undefined => {
   return String(v)
 }
 
+/** `authors` array frontmatter (Jekyll-wave corpus): entries are strings or
+ * `{ name }` objects; joined with ', ' for the byline. */
+const asAuthors = (v: unknown): string | undefined => {
+  if (!Array.isArray(v) || v.length === 0) return undefined
+  const names = v.map((entry) => asAuthor(entry)).filter((n) => n !== undefined)
+  return names.length ? names.join(', ') : undefined
+}
+
 const asSubjects = (fm: Record<string, unknown>): PostSubject[] | undefined => {
   const raw = fm.categories ?? fm.subjects
   if (!Array.isArray(raw) || raw.length === 0) return undefined
@@ -114,7 +122,7 @@ export const loadMarkdownPosts = ({
         title: asString(fm.title) ?? (format === 'adoc' ? asciidocTitle(body) : undefined) ?? stem.slice(11),
         format,
         lang: asString(fm.lang) ?? langFallback,
-        author: asAuthor(fm.author) ?? authorFallback ?? null,
+        author: asAuthor(fm.author) ?? asAuthors(fm.authors) ?? authorFallback ?? null,
         description: asString(fm.description) ?? asString(fm.excerpt),
         subjects: asSubjects(fm),
         draft: fm.draft === true,
